@@ -1,0 +1,20 @@
+rm wc
+echo hello > a
+wc < a | asdvgd
+q
+clear
+echo hello > <
+echo hello >
+q
+history | wc
+history | wc | cat
+history | wc > a
+cat a
+history < a
+q
+echo hello > a
+wc < a
+q
+clear
+wc < a
+q
