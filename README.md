@@ -1,4 +1,4 @@
-# OSN Assignment 2
+# OSN Assignment 3
 
 # **MOSH - A shell in C**
 
@@ -7,6 +7,7 @@
 ## Introduction
 This is a simple shell made in C which tries to mimic the actual linux terminal shell (bash , more specifically). 
 It supports basic bash commands like echo , ls , pwd , cd , etc.. and some user defined commands like pinfo and nightswatch. Other commands have been taken care of by using execvp(). The whole shell has been coded using C.
+The shell also supports Redirectiion and Piping along with handling of ctrl C and ctrl Z. Job control functions(fg , bg..) are also implemented. Chaining of commands is also supported.
 
 
 ## Compiling and Running:
@@ -19,7 +20,7 @@ It supports basic bash commands like echo , ls , pwd , cd , etc.. and some user 
 This is a header file that includes all the required headers for the rest of the files
 - - -
 - ### main.c
-This file contains the main code that implements functions from all other files. This file is responsible for printing the prompt of the shell after getting username and hostname of the system. All the signal handling functions are declared in this file as well as any fork() and execvp() calls. The signal handler for handling SIGCHLD and SIGINT signals from child processes is declared in this file.
+This file contains the main code that implements functions from all other files. This file is responsible for printing the prompt of the shell after getting username and hostname of the system. 
 
 ##### Additional info
 - All paths containing the home directory path as their subset have it replaced by ~(tilda). 
@@ -28,14 +29,61 @@ This file contains the main code that implements functions from all other files.
 - For any general error like errors in File I/O , getcwd() command etc. perror is used
 - The background process names and pid are stored using a Linked list data structure
 - - -
+
+- ### global_var.h
+This file contains all the global variable declarations like - **username , home directory , background job counter , shell's process id , string of what the user typed , prev_directory string , current directory string , The process structure(Process name , process pid) and its head pointer.**
+It also contains the declarations of the functions related to inserting and deleting the processes from the linked list as well as signal handlers.
+
+##### Additional info
+- This echo does not take into account inverted commas and escape sequences
+- All spaces and tabs between words are reduced to one space character during printing(like bash)
+- All function declarations are present in the **echo.h** file.
+- - -
+
+- ### glob_func.c
+This file has all the function bodies of the - Signal handlers for Ctrl Z and Ctrl C , Linked list related functions for the background job list , Killing of background children.
+##### Additional info
+- The ctrl c handler sends SIGINT signal to any current running foreground process. If no such process , it simply prints a new prompt line.
+- The ctrl z handler stops any running Foreground process and puts it in the background with the stopped state. If no such child process,prints new prompt line.
+- All function declarations are present in the **global_var.h** file.
+- - - 
+
 - ### read_func.c
 This file has all the function bodies responsible for reading and parsing the user typed command. Fgets is used to read a line typed by the user. This line is then parsed by semicolon and then by spaces using the strtok function. The typed line is transformed into an array of strings of different commands (that were semicolon separated) and each such string is then parsed into an array of words.
+This file also contains the code for recognizing and execution of the commands.
+The parsed command is recognized , checked for chaining , checked for piping , checked for redirection and then executed (either using execvp or defined functions in the code)
 ##### Additional info
 - If no semicolon is specified , it is treated as one command
 - Typing nothing , typing only spaces or only semicolons are all treated as empty commands
-- Pressing of ctrl c is handled by the SIGINT handler which kills any background processes before exiting
 - All function declarations are present in the **read_func.h** file.
 - - - 
+
+- ### job_func.c
+This file contains all the job control functions - fg , bg , jobs , kjob , overkill
+**fg  [job number]**
+**bg  [job number]**
+**jobs**
+**kjob [job number] [signal number]**
+**overkill**
+
+fg - It brings the job selected from the job list by its number from background to the foreground(gives it terminal)
+bg - It changes state of a background job selected by number to running
+jobs - lists out all the jobs in order they were created along with their state and pid
+kjob - sends a signal number to the particular job number
+overkill - kills all background jobs by giving the SIGKILL signal
+##### Additional info
+- The jobs are indexed starting from 1
+- The job number argument should be more than equal to 1 (if atleast 1 job exists) till the last number of job
+- All function declarations are present in the **job_func.h** file.
+- - - 
+
+- ### pwd.c
+This file is for implementing the bash pwd functionality. It prints the path of the current working directory of the shell to stdout.
+
+- - -
+
+
+
 
 - ### echo.c
 This file implements the "echo" functionality (printing user typed line to stdout followed by a newline).
@@ -113,9 +161,49 @@ The newborn command after nightswatch prints a line every n seconds showing the 
 
 - - -
 
-- ### Additional commands
-- clear - Clears the screen
-- exit - Terminates the shell after killing any left child processes
+- ### redirect.c
+This file implements redirection for the shell. It alters stdout and stdin temporarily for a command to a specified file. It does so with the dup2() call.
+**command1 [< , > , >> ] [filename**] (< means input redirected and > means output(overwrite) , >> means output(append) )
+
+##### Additional info
+- Multiple redirections are supported eg. cat a > b > c > d .. < f < g , only the rightmost output file and input file are considered(altho the rest are still created/checked for existence)
+- For input redirection(<) , the file should exist
+- Any filename after > , is truncated to 0 length.
+- $1> , <> , etc.. are not supported.
+-  All function declarations are present in the **redirect.h** file.
+
+- - -
+
+- ### pipe.c
+This file implements piping for the shell. The function runs a for loop over the parsed command and looks for pipes (|). At each pipe the stdout and stdin are connected to the write end of this pipe and read end of previous pipe respectively.
+**command1 | command2 | command3 ...** 
+
+##### Additional info
+- Redirections within piping is also supported (eg. wc < a | cat)
+- For the first command in the pipe , the stdin is 0 and for the last command stdout is 1
+-  All function declarations are present in the **pipe.h** file.
+
+- - -
+
+- ### chain_check.c
+This file implements command chaining for the shell. The function runs a for loop over the parsed command and looks for symbols $(OR) and @(AND). At a @ , if the commands to the left of it are returning false , the command to the right of it wont execute. At a $ , if the commands to the left of it returned true , the commands to the right of it wont execute.
+**command1 @ command2 $ command3 ...** 
+
+##### Additional info
+- There is no priority order is taken from left to right
+- The exit value(0 or 1) of a group of commands is 1(false) if an error occurs or command is not found. Other wise its 0(false). This is represented by a sad and happy smiley face preceding the prompt.
+-  All function declarations are present in the **chain_check.h** file.
+
+- - -
+
+
+
+
+- ### Additional implementations
+- clear or c - Clears the screen
+- q or quit - Terminates the shell after killing any left child processes
+- :') or :'( is shown before the prompt to show whether the execution was erroneous or not.
+- The hyphen "-" saves the previously visited directory , so cd - takes us to the previously visited directory.
 
 ## Assumptions
 - MOSH is designed for day to day use and has reasonable buffer sizes for holding any kind of command or string. So it is not meant to be stress tested.
