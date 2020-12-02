@@ -2,7 +2,7 @@
 
 # **MOSH - A shell in C**
 
-#### Mehul Mathur 2019101046
+#### Mehul Mathur
 
 ## Introduction
 This is a simple shell made in C which tries to mimic the actual linux terminal shell (bash , more specifically). 
