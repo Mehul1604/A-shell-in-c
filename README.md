@@ -11,8 +11,8 @@ The shell also supports Redirectiion and Piping along with handling of ctrl C an
 
 
 ## Compiling and Running:
-- Run make in the folder "C-Shell" to compile all the files. (makefile file also present in the folder)
-- Run the executable named "mosh" inside that folder from any other folder and that folder will become your home directory for the shell. (A test directory and a .secret file has been included in the folder just for testing out the ls and cd command)
+- Run **make** in the folder **C-Shell** to compile all the files. (makefile file also present in the folder)
+- Run the executable named **mosh** by typing the pathname to the executable on the command line inside that folder from any other folder and that folder will become your home directory for the shell. (A test directory and a .secret file has been included in the folder just for testing out the ls and cd command)
 
 ## File and Functions
 
